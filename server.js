@@ -38,13 +38,9 @@ app.use('/api/sensors', require('./routes/sensors'));
 app.use('/api/collab', require('./routes/tasks'));
 app.use('/api/collab', require('./routes/messages'));
 
-// Serve Frontend (production build)
-const frontendBuildPath = path.join(__dirname, '..', 'frontend', 'dist');
-app.use(express.static(frontendBuildPath));
-
-// Catch-all: send index.html for any non-API route (React SPA routing)
-app.get('/{*splat}', (req, res) => {
-    res.sendFile(path.join(frontendBuildPath, 'index.html'));
+// Health check route for Vercel
+app.get('/', (req, res) => {
+    res.json({ message: 'Smart Agriculture API is running successfully on Vercel!' });
 });
 
 const PORT = process.env.PORT || 5000;
