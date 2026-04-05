@@ -33,7 +33,11 @@ const connectDB = async () => {
         });
         isConnected = db.connections[0].readyState;
         console.log('MongoDB Connected Successfully');
-        startSimulation(io);
+
+        // Disable simulation in Serverless environments (Vercel) to prevent 10s Lambda timeouts
+        if (process.env.NODE_ENV !== 'production') {
+            startSimulation(io);
+        }
     } catch (err) {
         console.error('Atlas Connection Error:', err.message);
         throw err; // Throw explicitly
