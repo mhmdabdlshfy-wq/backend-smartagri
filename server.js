@@ -26,22 +26,32 @@ app.use(express.json());
 let isConnected = false;
 const connectDB = async () => {
     if (isConnected) return;
-    console.log("Vercel Check - Is MONGO_URI available?:", process.env.MONGO_URI ? "YES" : "NO");
+    console.log("Attempting to connect to:", process.env.MONGO_URI ? "URI EXISTS" : "URI MISSING");
     try {
-        const db = await mongoose.connect(process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/smart-agri');
+        const db = await mongoose.connect(process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/smart-agri', {
+            serverSelectionTimeoutMS: 5000 // Fails quickly in 5 seconds instead of 30
+        });
         isConnected = db.connections[0].readyState;
         console.log('MongoDB Connected Successfully');
-        // Start Simulation only after DB is ready (careful in serverless, but ok for now)
         startSimulation(io);
     } catch (err) {
-        console.error('MongoDB Connection Error:', err);
+        console.error('Atlas Connection Error:', err.message);
+        throw err; // Throw explicitly
     }
 };
 
 // Ensure DB is connected before handling ANY request
 app.use(async (req, res, next) => {
-    await connectDB();
-    next();
+    try {
+        await connectDB();
+        next();
+    } catch (err) {
+        // This will print the EXACT error inside Postman!
+        return res.status(500).json({
+            message: 'Database Connection Failed',
+            error: err.message
+        });
+    }
 });
 
 
