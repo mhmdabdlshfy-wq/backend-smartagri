@@ -23,9 +23,10 @@ app.use(cors());
 app.use(express.json());
 
 // Database Connection
+console.log("Vercel Check - Is MONGO_URI available?:", process.env.MONGO_URI ? "YES" : "NO");
 mongoose.connect(process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/smart-agri')
     .then(() => {
-        console.log('MongoDB Connected');
+        console.log('MongoDB Connected Successfully');
         // Start Simulation only after DB is ready
         startSimulation(io);
     })
@@ -43,5 +44,11 @@ app.get('/', (req, res) => {
     res.json({ message: 'Smart Agriculture API is running successfully on Vercel!' });
 });
 
-const PORT = process.env.PORT || 5000;
-server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+// For local testing vs Vercel
+if (process.env.NODE_ENV !== 'production') {
+    const PORT = process.env.PORT || 5000;
+    server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+}
+
+// Required for Vercel to work property
+module.exports = app;
