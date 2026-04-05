@@ -10,7 +10,7 @@ router.post('/register', async (req, res) => {
     const { username, password, role, fullName } = req.body;
     if (!username || !password) return res.status(400).json({ message: 'Username and password are required' });
 
-    const allowedRoles = ['farmer', 'engineer'];
+    const allowedRoles = ['farmer', 'engineer', 'admin'];
     const userRole = allowedRoles.includes(role) ? role : 'farmer';
 
     try {
