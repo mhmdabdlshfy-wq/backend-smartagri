@@ -343,4 +343,41 @@ router.get('/export', async (req, res) => {
     }
 });
 
+// ──────────────────────────────────────────────
+// POST /seed - Generate sample sensor data (for Vercel deployment)
+// ──────────────────────────────────────────────
+router.post('/seed', async (req, res) => {
+    try {
+        const count = await SensorData.countDocuments();
+        if (count > 50) {
+            return res.json({ message: `Database already has ${count} records. No seeding needed.` });
+        }
+
+        const now = new Date();
+        const data = [];
+
+        // Generate 200 data points over the last ~8 hours
+        for (let i = 200; i >= 0; i--) {
+            const t = new Date(now - i * 60000 * 2.5); // every 2.5 minutes
+            const hour = t.getHours();
+            const cycle = Math.cos((hour - 14) / 12 * Math.PI);
+
+            data.push({
+                temperature: parseFloat((22 + cycle * 5 + (Math.random() - 0.5) * 2).toFixed(1)),
+                humidity: parseFloat((58 - cycle * 10 + (Math.random() - 0.5) * 3).toFixed(1)),
+                ph: parseFloat((6.5 + (Math.random() - 0.5) * 0.4).toFixed(2)),
+                soilMoisture: parseFloat((50 - cycle * 8 + (Math.random() - 0.5) * 3).toFixed(1)),
+                cropType: 'Tomato',
+                createdAt: t
+            });
+        }
+
+        await SensorData.insertMany(data);
+        res.json({ message: `Seeded ${data.length} sensor records successfully!` });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Seed Error', error: err.message });
+    }
+});
+
 module.exports = router;
