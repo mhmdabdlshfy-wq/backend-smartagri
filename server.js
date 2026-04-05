@@ -22,15 +22,27 @@ const io = new Server(server, {
 app.use(cors());
 app.use(express.json());
 
-// Database Connection
-console.log("Vercel Check - Is MONGO_URI available?:", process.env.MONGO_URI ? "YES" : "NO");
-mongoose.connect(process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/smart-agri')
-    .then(() => {
+// Database Connection - Serverless Safe Pattern
+let isConnected = false;
+const connectDB = async () => {
+    if (isConnected) return;
+    console.log("Vercel Check - Is MONGO_URI available?:", process.env.MONGO_URI ? "YES" : "NO");
+    try {
+        const db = await mongoose.connect(process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/smart-agri');
+        isConnected = db.connections[0].readyState;
         console.log('MongoDB Connected Successfully');
-        // Start Simulation only after DB is ready
+        // Start Simulation only after DB is ready (careful in serverless, but ok for now)
         startSimulation(io);
-    })
-    .catch(err => console.error('MongoDB Connection Error:', err));
+    } catch (err) {
+        console.error('MongoDB Connection Error:', err);
+    }
+};
+
+// Ensure DB is connected before handling ANY request
+app.use(async (req, res, next) => {
+    await connectDB();
+    next();
+});
 
 
 // Routes
